@@ -80,7 +80,128 @@ function goBack() {
 }
 
 function shufflePrizes() {
-  shuffledPrizes = [...shuffledPrizes].sort(() => Math.random() - 0.5);
+  const n = names.length;
+  const newOrder = [...shuffledPrizes].sort(() => Math.random() - 0.5);
+  animateShuffle(shuffledPrizes, newOrder, n, () => {
+    shuffledPrizes = newOrder;
+  });
+}
+
+function animateShuffle(fromOrder, toOrder, n, onDone) {
+  const canvas = document.getElementById('customize-canvas');
+  const ctx = canvas.getContext('2d');
+  const duration = 500;
+  const start = performance.now();
+
+  const BOX_W = 72, BOX_H = 30;
+  const baseY = TOP_PAD + ROW_H * ROWS + 8;
+
+  function getBoxX(col) { return colX(col) - BOX_W / 2; }
+
+  // fromOrder と toOrder の各インデックスの移動先を計算
+  const fromPositions = fromOrder.map((_, i) => getBoxX(i));
+  const toPositions = fromOrder.map((val) => {
+    const destIdx = toOrder.indexOf(val);
+    return getBoxX(destIdx);
+  });
+
+  function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const e = easeInOut(t);
+
+    // あみだ本体を再描画
+    drawCustomizeBase(ctx, n);
+
+    // ボックスをアニメーション
+    fromOrder.forEach((label, i) => {
+      const x = fromPositions[i] + (toPositions[i] - fromPositions[i]) * e;
+      const bounce = Math.sin(t * Math.PI) * 12;
+      const y = baseY - bounce;
+
+      ctx.fillStyle = '#667eea';
+      ctx.beginPath();
+      ctx.roundRect(x, y, BOX_W, BOX_H, 6);
+      ctx.fill();
+
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('？', x + BOX_W / 2, y + BOX_H / 2);
+      ctx.textBaseline = 'alphabetic';
+    });
+
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      onDone();
+      drawCustomize();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// あみだ本体（縦線・橋・ラベル）だけ描画するヘルパー
+function drawCustomizeBase(ctx, n) {
+  const { w, h } = getCanvasSize(n);
+  ctx.clearRect(0, 0, w, h);
+
+  for (let col = 0; col < n; col++) {
+    ctx.beginPath();
+    ctx.moveTo(colX(col), TOP_PAD);
+    ctx.lineTo(colX(col), TOP_PAD + ROW_H * ROWS);
+    ctx.strokeStyle = '#bbb';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < n - 1; col++) {
+      const hasBridge = bridges.some(b => b.row === row && b.col === col);
+      const neighborLeft = col > 0 && bridges.some(b => b.row === row && b.col === col - 1);
+      const neighborRight = col < n - 2 && bridges.some(b => b.row === row && b.col === col + 1);
+      if (!hasBridge && !neighborLeft && !neighborRight) {
+        ctx.beginPath();
+        ctx.moveTo(colX(col), bridgeMidY(row));
+        ctx.lineTo(colX(col + 1), bridgeMidY(row));
+        ctx.strokeStyle = 'rgba(102,126,234,0.15)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+
+  for (const b of bridges) {
+    ctx.beginPath();
+    ctx.moveTo(colX(b.col), bridgeMidY(b.row));
+    ctx.lineTo(colX(b.col + 1), bridgeMidY(b.row));
+    ctx.strokeStyle = '#667eea';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    const mx = bridgeMidX(b.col);
+    const my = bridgeMidY(b.row);
+    ctx.fillStyle = '#e53935';
+    ctx.beginPath();
+    ctx.arc(mx, my, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('×', mx, my);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  for (let col = 0; col < n; col++) {
+    ctx.fillStyle = '#444';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(names[col], colX(col), TOP_PAD - 10);
+  }
 }
 
 // --- カスタマイズ → プレイ ---
