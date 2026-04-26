@@ -1,6 +1,7 @@
 // --- 状態 ---
 let names = ['Aさん', 'Bさん', 'Cさん'];
 let prizes = ['1等', '2等', '3等'];
+let shuffledPrizes = [];
 let bridges = [];
 let animating = false;
 let revealed = [];
@@ -66,6 +67,9 @@ function goToCustomize() {
 
   // ランダムに初期橋を生成
   generateBridges(n);
+
+  // 結果をシャッフル
+  shuffledPrizes = [...prizes].sort(() => Math.random() - 0.5);
 
   showScreen('customize-screen');
   drawCustomize();
@@ -195,7 +199,7 @@ function drawCustomize() {
     ctx.fillStyle = '#555';
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(prizes[col], colX(col), by + 20);
+    ctx.fillText(shuffledPrizes[col], colX(col), by + 20);
   }
 
   canvas.onclick = (e) => handleCustomizeClick(e, canvas, n);
@@ -376,6 +380,7 @@ function drawAnimatedDot(startCol, step, path) {
 function resetAll() {
   names = ['Aさん', 'Bさん', 'Cさん'];
   prizes = ['1等', '2等', '3等'];
+  shuffledPrizes = [];
   bridges = [];
   revealed = [];
   animating = false;
