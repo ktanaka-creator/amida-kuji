@@ -1,0 +1,151 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+  padding: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+h1 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 28px;
+  color: #333;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* 設定画面 */
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.setup-col h2 {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.input-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 40px;
+  margin-bottom: 10px;
+}
+
+.input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-row input:focus {
+  border-color: #667eea;
+}
+
+.btn-delete {
+  background: #ff5c5c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.btn-add {
+  background: #f0f0f0;
+  color: #555;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn-add:hover { background: #e0e0e0; }
+
+.btn-start {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn-start:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-start:active { transform: translateY(0); }
+
+/* あみだ画面 */
+.hint {
+  text-align: center;
+  color: #888;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+
+#amida-wrapper {
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}
+
+#amida-canvas {
+  display: block;
+  cursor: pointer;
+}
+
+.btn-reset {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 28px;
+  background: #f0f0f0;
+  color: #555;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-reset:hover { background: #e0e0e0; }

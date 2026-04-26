@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>あみだくじ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 あみだくじ</h1>
+
+    <!-- 設定画面 -->
+    <div id="setup-screen" class="screen active">
+      <div class="setup-grid">
+        <div class="setup-col">
+          <h2>参加者</h2>
+          <div id="names-list" class="input-list"></div>
+          <button class="btn-add" onclick="addName()">＋ 追加</button>
+        </div>
+        <div class="setup-col">
+          <h2>結果</h2>
+          <div id="prizes-list" class="input-list"></div>
+          <button class="btn-add" onclick="addPrize()">＋ 追加</button>
+        </div>
+      </div>
+      <button class="btn-start" onclick="startAmida()">あみだ作成！</button>
+    </div>
+
+    <!-- あみだ画面 -->
+    <div id="amida-screen" class="screen">
+      <p class="hint">名前をクリックして結果を見よう！</p>
+      <div id="amida-wrapper">
+        <canvas id="amida-canvas"></canvas>
+      </div>
+      <button class="btn-reset" onclick="resetAll()">最初からやり直す</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
