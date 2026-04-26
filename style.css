@@ -149,3 +149,44 @@ h1 {
 }
 
 .btn-reset:hover { background: #e0e0e0; }
+
+.hint.sub {
+  font-size: 0.85rem;
+  margin-top: -10px;
+  margin-bottom: 16px;
+}
+
+#customize-wrapper {
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}
+
+#customize-canvas {
+  display: block;
+  cursor: pointer;
+}
+
+.btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.btn-back {
+  padding: 10px 28px;
+  background: #f0f0f0;
+  color: #555;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-back:hover { background: #e0e0e0; }
+
+.btn-row .btn-start {
+  width: auto;
+}

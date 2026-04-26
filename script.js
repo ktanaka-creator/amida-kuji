@@ -11,11 +11,10 @@ const ROW_H = 40;
 const TOP_PAD = 60;
 const BOT_PAD = 60;
 const SIDE_PAD = 60;
+const HIT_RADIUS = 18;
 
 // --- 初期化 ---
-window.onload = () => {
-  renderInputs();
-};
+window.onload = () => { renderInputs(); };
 
 function renderInputs() {
   renderList('names-list', names, 'name');
@@ -37,58 +36,58 @@ function renderList(containerId, arr, type) {
   });
 }
 
-function addName() {
-  names.push('');
-  syncPrizes();
-  renderInputs();
-}
-
-function addPrize() {
-  prizes.push('');
-  syncNames();
-  renderInputs();
-}
+function addName() { names.push(''); syncPrizes(); renderInputs(); }
+function addPrize() { prizes.push(''); syncNames(); renderInputs(); }
 
 function syncPrizes() {
   while (prizes.length < names.length) prizes.push('');
   while (prizes.length > names.length) prizes.pop();
 }
-
 function syncNames() {
   while (names.length < prizes.length) names.push('');
   while (names.length > prizes.length) names.pop();
 }
 
 function removeItem(type, i) {
-  if (type === 'name') {
-    names.splice(i, 1);
-    if (prizes.length > names.length) prizes.pop();
-  } else {
-    prizes.splice(i, 1);
-    if (names.length > prizes.length) names.pop();
-  }
+  if (type === 'name') { names.splice(i, 1); if (prizes.length > names.length) prizes.pop(); }
+  else { prizes.splice(i, 1); if (names.length > prizes.length) names.pop(); }
   renderInputs();
 }
 
-// --- あみだ生成 ---
-function startAmida() {
-  // 入力値を最新化
+// --- 設定 → カスタマイズ ---
+function goToCustomize() {
+  // 入力値を確定
   document.querySelectorAll('#names-list input').forEach((el, i) => names[i] = el.value || `参加者${i+1}`);
   document.querySelectorAll('#prizes-list input').forEach((el, i) => prizes[i] = el.value || `${i+1}等`);
 
-  const n = Math.max(names.length, prizes.length);
+  const n = Math.max(names.length, prizes.length, 2);
   while (names.length < n) names.push(`参加者${names.length+1}`);
   while (prizes.length < n) prizes.push(`${prizes.length+1}等`);
 
+  // ランダムに初期橋を生成
   generateBridges(n);
-  revealed = new Array(n).fill(false);
 
-  document.getElementById('setup-screen').classList.remove('active');
-  document.getElementById('amida-screen').classList.add('active');
+  showScreen('customize-screen');
+  drawCustomize();
+}
 
+function goBack() {
+  showScreen('setup-screen');
+}
+
+// --- カスタマイズ → プレイ ---
+function goToPlay() {
+  revealed = new Array(names.length).fill(false);
+  showScreen('amida-screen');
   drawAmida();
 }
 
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// --- 橋生成 ---
 function generateBridges(n) {
   bridges = [];
   for (let row = 0; row < ROWS; row++) {
@@ -103,17 +102,142 @@ function generateBridges(n) {
   }
 }
 
-// --- 描画 ---
+// --- 座標ヘルパー ---
 function getCanvasSize(n) {
-  return {
-    w: SIDE_PAD * 2 + COL_W * (n - 1),
-    h: TOP_PAD + ROW_H * ROWS + BOT_PAD,
-  };
+  return { w: SIDE_PAD * 2 + COL_W * (n - 1), h: TOP_PAD + ROW_H * ROWS + BOT_PAD };
 }
-
 function colX(col) { return SIDE_PAD + col * COL_W; }
 function rowY(row) { return TOP_PAD + row * ROW_H; }
+function bridgeMidX(col) { return (colX(col) + colX(col + 1)) / 2; }
+function bridgeMidY(row) { return rowY(row) + ROW_H / 2; }
 
+// --- カスタマイズ描画 ---
+function drawCustomize() {
+  const n = names.length;
+  const canvas = document.getElementById('customize-canvas');
+  const { w, h } = getCanvasSize(n);
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+
+  // 縦線
+  for (let col = 0; col < n; col++) {
+    ctx.beginPath();
+    ctx.moveTo(colX(col), TOP_PAD);
+    ctx.lineTo(colX(col), TOP_PAD + ROW_H * ROWS);
+    ctx.strokeStyle = '#bbb';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 追加可能スポット（薄いガイド）
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < n - 1; col++) {
+      const hasBridge = bridges.some(b => b.row === row && b.col === col);
+      const neighborLeft = col > 0 && bridges.some(b => b.row === row && b.col === col - 1);
+      const neighborRight = col < n - 2 && bridges.some(b => b.row === row && b.col === col + 1);
+      if (!hasBridge && !neighborLeft && !neighborRight) {
+        // 追加できる場所をガイド表示
+        ctx.beginPath();
+        ctx.moveTo(colX(col), bridgeMidY(row));
+        ctx.lineTo(colX(col + 1), bridgeMidY(row));
+        ctx.strokeStyle = 'rgba(102,126,234,0.15)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+
+  // 既存の橋
+  for (const b of bridges) {
+    ctx.beginPath();
+    ctx.moveTo(colX(b.col), bridgeMidY(b.row));
+    ctx.lineTo(colX(b.col + 1), bridgeMidY(b.row));
+    ctx.strokeStyle = '#667eea';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // 削除ヒント（中央に×アイコン）
+    const mx = bridgeMidX(b.col);
+    const my = bridgeMidY(b.row);
+    ctx.fillStyle = '#e53935';
+    ctx.beginPath();
+    ctx.arc(mx, my, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('×', mx, my);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // ラベル
+  for (let col = 0; col < n; col++) {
+    ctx.fillStyle = '#444';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(names[col], colX(col), TOP_PAD - 10);
+  }
+  for (let col = 0; col < n; col++) {
+    const bx = colX(col) - 36;
+    const by = TOP_PAD + ROW_H * ROWS + 8;
+    ctx.fillStyle = '#f5f5f5';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, 72, 30, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#555';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(prizes[col], colX(col), by + 20);
+  }
+
+  canvas.onclick = (e) => handleCustomizeClick(e, canvas, n);
+}
+
+function handleCustomizeClick(e, canvas, n) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  // 既存の橋をクリック → 削除
+  for (let i = 0; i < bridges.length; i++) {
+    const b = bridges[i];
+    const mx = bridgeMidX(b.col);
+    const my = bridgeMidY(b.row);
+    if (Math.abs(x - mx) < HIT_RADIUS && Math.abs(y - my) < HIT_RADIUS) {
+      bridges.splice(i, 1);
+      drawCustomize();
+      return;
+    }
+  }
+
+  // 空きスポットをクリック → 追加
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < n - 1; col++) {
+      const mx = bridgeMidX(col);
+      const my = bridgeMidY(row);
+      if (Math.abs(x - mx) < HIT_RADIUS && Math.abs(y - my) < HIT_RADIUS) {
+        const hasBridge = bridges.some(b => b.row === row && b.col === col);
+        const neighborLeft = col > 0 && bridges.some(b => b.row === row && b.col === col - 1);
+        const neighborRight = col < n - 2 && bridges.some(b => b.row === row && b.col === col + 1);
+        if (!hasBridge && !neighborLeft && !neighborRight) {
+          bridges.push({ row, col });
+          drawCustomize();
+          return;
+        }
+      }
+    }
+  }
+}
+
+// --- プレイ画面描画 ---
 function drawAmida(highlightCol = -1, pathCells = []) {
   const n = names.length;
   const canvas = document.getElementById('amida-canvas');
@@ -121,10 +245,8 @@ function drawAmida(highlightCol = -1, pathCells = []) {
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
-
   ctx.clearRect(0, 0, w, h);
 
-  // 縦線
   for (let col = 0; col < n; col++) {
     ctx.beginPath();
     ctx.moveTo(colX(col), TOP_PAD);
@@ -134,18 +256,16 @@ function drawAmida(highlightCol = -1, pathCells = []) {
     ctx.stroke();
   }
 
-  // 横線（橋）
   for (const b of bridges) {
     const onPath = pathCells.some(p => p.row === b.row && p.col === b.col);
     ctx.beginPath();
-    ctx.moveTo(colX(b.col), rowY(b.row) + ROW_H / 2);
-    ctx.lineTo(colX(b.col + 1), rowY(b.row) + ROW_H / 2);
+    ctx.moveTo(colX(b.col), bridgeMidY(b.row));
+    ctx.lineTo(colX(b.col + 1), bridgeMidY(b.row));
     ctx.strokeStyle = onPath ? '#e53935' : '#bbb';
     ctx.lineWidth = onPath ? 3 : 2;
     ctx.stroke();
   }
 
-  // 上部ラベル（名前）
   for (let col = 0; col < n; col++) {
     const isSelected = col === highlightCol;
     ctx.fillStyle = isSelected ? '#667eea' : '#444';
@@ -154,13 +274,10 @@ function drawAmida(highlightCol = -1, pathCells = []) {
     ctx.fillText(names[col], colX(col), TOP_PAD - 10);
   }
 
-  // 下部ラベル（結果）
   for (let col = 0; col < n; col++) {
     const destCol = getDestination(col);
     const isRevealed = revealed[col];
     const isSelected = col === highlightCol;
-
-    // 結果ボックス
     const bx = colX(destCol) - 36;
     const by = TOP_PAD + ROW_H * ROWS + 8;
     ctx.fillStyle = isSelected ? '#667eea' : (isRevealed ? '#f3f0ff' : '#f5f5f5');
@@ -184,33 +301,23 @@ function drawAmida(highlightCol = -1, pathCells = []) {
     }
   }
 
-  // クリック判定用に名前の位置を設定
-  canvas.onclick = (e) => handleClick(e, canvas, n);
-}
-
-function handleClick(e, canvas, n) {
-  if (animating) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  for (let col = 0; col < n; col++) {
-    const cx = colX(col);
-    if (Math.abs(x - cx) < 36 && y < TOP_PAD) {
-      animatePath(col);
-      return;
+  canvas.onclick = (e) => {
+    if (animating) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    for (let col = 0; col < n; col++) {
+      if (Math.abs(x - colX(col)) < 36 && y < TOP_PAD) { animatePath(col); return; }
     }
-  }
+  };
 }
 
 // --- パス計算 ---
 function getDestination(startCol) {
   let col = startCol;
   for (let row = 0; row < ROWS; row++) {
-    const bridge = bridges.find(b => b.row === row && b.col === col);
-    if (bridge) { col = col + 1; continue; }
-    const bridgeLeft = bridges.find(b => b.row === row && b.col === col - 1);
-    if (bridgeLeft) { col = col - 1; }
+    if (bridges.some(b => b.row === row && b.col === col)) { col++; continue; }
+    if (bridges.some(b => b.row === row && b.col === col - 1)) { col--; }
   }
   return col;
 }
@@ -219,16 +326,11 @@ function getPath(startCol) {
   let col = startCol;
   const path = [];
   for (let row = 0; row < ROWS; row++) {
-    const bridge = bridges.find(b => b.row === row && b.col === col);
-    if (bridge) {
-      path.push({ row, col, dir: 'right' });
-      col = col + 1;
-      continue;
+    if (bridges.some(b => b.row === row && b.col === col)) {
+      path.push({ row, col, dir: 'right' }); col++; continue;
     }
-    const bridgeLeft = bridges.find(b => b.row === row && b.col === col - 1);
-    if (bridgeLeft) {
-      path.push({ row, col, dir: 'left' });
-      col = col - 1;
+    if (bridges.some(b => b.row === row && b.col === col - 1)) {
+      path.push({ row, col, dir: 'left' }); col--;
     }
   }
   return { finalCol: col, path };
@@ -237,17 +339,12 @@ function getPath(startCol) {
 // --- アニメーション ---
 function animatePath(startCol) {
   animating = true;
-  const n = names.length;
-  const { finalCol, path } = getPath(startCol);
-  const pathSet = new Set(path.map(p => `${p.row},${p.col === startCol ? p.col : (p.dir === 'right' ? p.col - 1 : p.col + 1)}`));
-
+  const { path } = getPath(startCol);
   let step = 0;
-  const pathCells = [];
 
   function tick() {
     if (step <= path.length) {
-      const cells = path.slice(0, step);
-      drawAmida(startCol, cells);
+      drawAmida(startCol, path.slice(0, step));
       drawAnimatedDot(startCol, step, path);
       step++;
       requestAnimationFrame(tick);
@@ -263,22 +360,12 @@ function animatePath(startCol) {
 function drawAnimatedDot(startCol, step, path) {
   const canvas = document.getElementById('amida-canvas');
   const ctx = canvas.getContext('2d');
-
   let col = startCol;
-  let y = TOP_PAD;
-
-  // stepに応じた現在位置計算
-  let currentRow = step;
   for (let i = 0; i < Math.min(step, path.length); i++) {
-    const p = path[i];
-    if (p.dir === 'right') col++;
-    else if (p.dir === 'left') col--;
+    if (path[i].dir === 'right') col++;
+    else if (path[i].dir === 'left') col--;
   }
-
-  const dotY = step < ROWS
-    ? TOP_PAD + step * ROW_H
-    : TOP_PAD + ROWS * ROW_H;
-
+  const dotY = step < ROWS ? TOP_PAD + step * ROW_H : TOP_PAD + ROWS * ROW_H;
   ctx.beginPath();
   ctx.arc(colX(col), dotY, 8, 0, Math.PI * 2);
   ctx.fillStyle = '#e53935';
@@ -292,8 +379,6 @@ function resetAll() {
   bridges = [];
   revealed = [];
   animating = false;
-
-  document.getElementById('amida-screen').classList.remove('active');
-  document.getElementById('setup-screen').classList.add('active');
+  showScreen('setup-screen');
   renderInputs();
 }

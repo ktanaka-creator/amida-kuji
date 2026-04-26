@@ -24,7 +24,20 @@
           <button class="btn-add" onclick="addPrize()">＋ 追加</button>
         </div>
       </div>
-      <button class="btn-start" onclick="startAmida()">あみだ作成！</button>
+      <button class="btn-start" onclick="goToCustomize()">次へ →</button>
+    </div>
+
+    <!-- カスタマイズ画面 -->
+    <div id="customize-screen" class="screen">
+      <p class="hint">横線をクリックして追加・削除できるよ！</p>
+      <p class="hint sub">決まったら「これで決定！」を押してね</p>
+      <div id="customize-wrapper">
+        <canvas id="customize-canvas"></canvas>
+      </div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack()">← 戻る</button>
+        <button class="btn-start" onclick="goToPlay()">これで決定！</button>
+      </div>
     </div>
 
     <!-- あみだ画面 -->
