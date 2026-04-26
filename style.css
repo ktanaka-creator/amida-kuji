@@ -187,6 +187,19 @@ h1 {
 
 .btn-back:hover { background: #e0e0e0; }
 
+.btn-shuffle {
+  padding: 10px 20px;
+  background: #f0f0f0;
+  color: #555;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-shuffle:hover { background: #e0e0e0; }
+
 .btn-row .btn-start {
   width: auto;
 }

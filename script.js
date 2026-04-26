@@ -79,6 +79,10 @@ function goBack() {
   showScreen('setup-screen');
 }
 
+function shufflePrizes() {
+  shuffledPrizes = [...shuffledPrizes].sort(() => Math.random() - 0.5);
+}
+
 // --- カスタマイズ → プレイ ---
 function goToPlay() {
   revealed = new Array(names.length).fill(false);
@@ -186,6 +190,7 @@ function drawCustomize() {
     ctx.textAlign = 'center';
     ctx.fillText(names[col], colX(col), TOP_PAD - 10);
   }
+  // 下部は「？」で隠す
   for (let col = 0; col < n; col++) {
     const bx = colX(col) - 36;
     const by = TOP_PAD + ROW_H * ROWS + 8;
@@ -196,10 +201,10 @@ function drawCustomize() {
     ctx.strokeStyle = '#ddd';
     ctx.lineWidth = 1;
     ctx.stroke();
-    ctx.fillStyle = '#555';
-    ctx.font = '13px sans-serif';
+    ctx.fillStyle = '#bbb';
+    ctx.font = '16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(shuffledPrizes[col], colX(col), by + 20);
+    ctx.fillText('？', colX(col), by + 20);
   }
 
   canvas.onclick = (e) => handleCustomizeClick(e, canvas, n);
